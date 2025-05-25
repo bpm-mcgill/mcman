@@ -1,8 +1,11 @@
-use reqwest::Client;
-use serde::{Serialize, Deserialize};
-use std::io;
+use reqwest::{Client};
+use serde::{Deserialize};
+use std::{fs::File, io};
+use futures_util::StreamExt;
+use std::io::Write;
 
-#[derive(Debug, Serialize, Deserialize)]
+// Deserialize structs for fetching version list
+#[derive(Debug, Deserialize)]
 struct Version {
     id: String,
     #[serde(rename = "type")]
@@ -15,6 +18,25 @@ struct Manifest {
     versions: Vec<Version>
 }
 
+// Deserlialize structs for fetching .jar url
+#[derive(Debug, Deserialize)]
+struct VersionData {
+    id: String,
+    downloads: VersionDownloads
+}
+
+#[derive(Debug, Deserialize)]
+struct VersionDownloads {
+    server: Option<DownloadsData>
+}
+
+#[derive(Debug, Deserialize)]
+struct DownloadsData {
+    size: i32,
+    url: String
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error>{
     const VURL: &str = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"; 
@@ -24,32 +46,45 @@ async fn main() -> Result<(), reqwest::Error>{
 
     println!("Version types to fetch (R: release, S: snapshots, B: betas, A: alphas): ");
     let mut input = String::new();
-    //if let Err(e) = io::stdin().read_line(&mut input) {
-    //    eprintln!("couldn't read input");
-    //}
-    // or 
 
-    let _ = io::stdin().read_line(&mut input).expect("Error reading input fuckass");
+    io::stdin().read_line(&mut input).expect("Error reading input fuckass");
     let first = input.trim().chars().next();
     let list_type = match first {
-        Some('R') => String::from("release"),
-        Some('S') => String::from("snapshot"),
-        Some('B') => String::from("old_beta"),
-        Some('A') => String::from("old_alpha"),
-        _ => String::from("release")
+        Some('R') => "release",
+        Some('S') => "snapshot",
+        Some('B') => "old_beta",
+        Some('A') => "old_alpha",
+        _ => "release"
     };
 
     let selected_versions: Vec<Version> = versions.into_iter().filter(|v| v.vtype == list_type).collect();
     
-    for v in selected_versions {
-        let v_num = v.id;
-        println!("{v_num}");
-    }
+    // lowk could just make dis jawn a for loop but who cares
+    let sel_ids: Vec<&String> = selected_versions.iter().map(|v| &v.id).collect();
+    println!("sel: {sel_ids:?}");
 
-
-    //println!("sel_vers = {selected_versions:#?}");
+    println!("Select a version: ");
+    input.clear();
+    let _ = io::stdin().read_line(&mut input).expect("Error reading input fuckass");
+    let trimd = input.trim();
     
-    //let latest = versions.first();
-    //println!("latest = {latest:#?}");
+    // 80% sure all versions after 1.3 have server .jars
+    if let Some(version) = selected_versions.iter().find(|v| v.id.as_str() == trimd) {
+        let data: VersionData = client.get(&version.url).send().await?.json().await?;
+        if let Some(server) = &data.downloads.server {
+            println!("Downloading server .jar");
+            println!("{}",server.size);
+            
+            let mut resp = client.get(&server.url).send().await?.bytes_stream();
+            let mut file = File::create("server.jar").expect("gng");
+            while let Some(chunk) = resp.next().await {
+                let chunk = chunk?;
+                file.write_all(&chunk).expect("balls");
+            }
+            println!("Download finished");
+        } else {
+            println!("No server jar file for that version");
+        }
+    } 
     Ok(())
 }
