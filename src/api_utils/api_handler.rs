@@ -73,7 +73,16 @@ impl ApiHandler {
         // Technically not needed here as manifest isn't used after this point, but imma leave dis jawn anyways
         drop(manifest);
        
-        // If the version doesn't exist, exit and return an error
+        // If the version doesn't exist, exit and return an Error
+        // Could use ok_or once I implement a custom error type to encapsulate reqwest::Errors and
+        //  custom errors
+        //
+        //  Implement From trait on custom error type: (rustbook excerpt)
+        // If we also define impl From<io::Error> for OurError to construct an instance of OurError from an io::Error,
+        //  then the ? operator calls in the body of read_username_from_file will call from and convert the error types 
+        //  without needing to add any more code to the function.
+        //
+        //let version = version.ok_or()
         let Some(v) = version else {
             println!("Version doesn't exist");
             return Ok(());

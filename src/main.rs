@@ -1,6 +1,5 @@
 use mcman::api_utils::api_handler::ApiHandler;
-use std::{fs::File, io::{self, Write}};
-
+use std::io;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error>{
