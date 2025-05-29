@@ -24,6 +24,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
+name = "async-trait"
+version = "0.1.88"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -871,6 +882,7 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 name = "mcman"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "color-eyre",
  "crossterm 0.29.0",
  "futures-util",
@@ -878,6 +890,8 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "tempfile",
+ "thiserror",
  "tokio",
 ]
 
@@ -1128,7 +1142,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
